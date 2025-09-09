@@ -1,0 +1,6 @@
+@ThorAPI_HostAddress = http://localhost:5053
+
+GET {{ThorAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
