@@ -12,8 +12,12 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<UsuarioService>();
+
 builder.Services.AddScoped<TagRepository>();
 builder.Services.AddScoped<TagService>();
+
+builder.Services.AddScoped<TagTipoRepository>();
+builder.Services.AddScoped<TagTipoService>();
 
 var app = builder.Build();
 
