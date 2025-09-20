@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using ThorAPI.Models;
-using ThorAPI.Services;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -11,11 +10,23 @@ public class TagTipoController : ControllerBase {
         _service = service;
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Put(int id, [FromBody] TagTipo dto) {
+        try {
+            var resultado = await _service.Atualiza(id, dto);
+            return Ok(resultado);
+        } catch (InvalidOperationException ex) {
+            return NotFound(ex.Message);
+        } catch (Exception ex) {
+            return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] TagTipo dto) {
         try {
             var resultado = await _service.Criar(dto);
-            return Ok(resultado);
+            return StatusCode(201, resultado);
         } catch (ArgumentException ex) {
             return BadRequest(ex.Message);
         } catch (InvalidOperationException ex) {

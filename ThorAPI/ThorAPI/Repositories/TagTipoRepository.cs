@@ -53,6 +53,19 @@ public class TagTipoRepository {
         return await conn.QueryAsync<TagTipo>(sql, new { Limit = limit, Offset = offset });
     }
 
+    internal async Task Atualiza(int id, TagTipo tagTipo) {
+        using var conn = Connection;
+        string sql = @"
+            UPDATE 
+                tag_tipo
+            SET 
+                nome = @Nome 
+            WHERE 
+                id = @Id
+        ";
+        await conn.ExecuteAsync(sql, new { Id = id, Nome = tagTipo.Nome });
+    }
+
     internal async Task DeletarPorIdAsync(int id) {
         using var conn = Connection;
         string sql = @"
@@ -67,7 +80,15 @@ public class TagTipoRepository {
 
     internal async Task<TagTipo?> ObterPorNomeAsync(string nome) {
         using var conn = Connection;
-        string sql = "SELECT * FROM tag_tipo WHERE nome = @Nome";
+        string sql = @"
+            SELECT 
+                id, 
+                nome 
+            FROM 
+                tag_tipo 
+            WHERE 
+                nome = @Nome
+        ";
         return await conn.QueryFirstOrDefaultAsync<TagTipo>(sql, new { Nome = nome });
     }
 }

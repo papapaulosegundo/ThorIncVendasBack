@@ -8,6 +8,18 @@ public class TagTipoService {
         _repository = repository;
     }
 
+    public async Task<TagTipo> Atualiza(int id, TagTipo tagTipo) {
+        var existente = await _repository.ObterPorNomeAsync(tagTipo.Nome);
+        if (existente == null) throw new InvalidOperationException("O tipo de tag não foi encontrado");
+
+        await _repository.Atualiza(id, tagTipo);
+
+        var novaTag = await _repository.ObterPorIdAsync(id);
+        if (novaTag == null) throw new Exception("Falha ao alterar e recuperar o novo tipo de tag");
+
+        return novaTag;
+    }
+
     public async Task<TagTipo> Criar(TagTipo tagTipo) {
         var existente = await _repository.ObterPorNomeAsync(tagTipo.Nome);
         if (existente != null) throw new InvalidOperationException("O nome já está sendo utilizado");
@@ -15,14 +27,14 @@ public class TagTipoService {
         var novoId = await _repository.InserirAsync(tagTipo);
         var novaTag = await _repository.ObterPorIdAsync(novoId);
 
-        if (novaTag == null) throw new Exception("Falha ao criar e recuperar a nova TagTipo");
+        if (novaTag == null) throw new Exception("Falha ao criar e recuperar o novo tipo de tag");
 
         return novaTag;
     }
 
     public async Task DeletarPorId(int id) {
         var existente = await _repository.ObterPorIdAsync(id);
-        if (existente == null) throw new KeyNotFoundException("TagTipo não encontrado para exclusão");
+        if (existente == null) throw new KeyNotFoundException("Tipo de tag não encontrado para exclusão");
 
         await _repository.DeletarPorIdAsync(id);
 
