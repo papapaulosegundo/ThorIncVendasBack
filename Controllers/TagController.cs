@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ThorAPI.Models;
-using ThorAPI.DTOs;
+using ThorAPI.Services;
 
 [ApiController]
 [Route("api/[controller]")]

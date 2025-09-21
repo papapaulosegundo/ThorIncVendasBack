@@ -19,6 +19,9 @@ builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<TagTipoRepository>();
 builder.Services.AddScoped<TagTipoService>();
 
+builder.Services.AddScoped<ProdutoRepository>();
+builder.Services.AddScoped<ProdutoService>();
+
 var app = builder.Build();
 
 

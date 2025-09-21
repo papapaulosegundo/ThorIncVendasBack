@@ -1,6 +1,8 @@
 using ThorAPI.Models;
 using ThorAPI.Repositories;
 
+namespace ThorAPI.Services;
+
 public class TagTipoService {
     private readonly TagTipoRepository _repository;
 
