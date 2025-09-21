@@ -1,35 +1,53 @@
-﻿using ThorAPI.DTOs;
-using ThorAPI.Models;
+﻿using ThorAPI.Models;
 using ThorAPI.Repositories;
 
 namespace ThorAPI.Services;
 
-public class UsuarioService
-{
-    public readonly IUsuarioRepository _repository;
+public class UsuarioService {
+    private readonly UsuarioRepository _repository;
 
-    public UsuarioService(IUsuarioRepository repository)
-    {
+    public UsuarioService(UsuarioRepository repository) {
         _repository = repository;
     }
 
-    public async Task<int> CriarUsuarioAsync(UsuarioCreateDTO dto)
-    {
-        if (dto.Senha != dto.ConfirmarSenha)
-            throw new ArgumentException("Senha e Confirmar Senha não coincidem.");
+    public async Task<Usuario> Criar(Usuario usuario) {
+        var jaExiste = await _repository.ObterPorEmailAsync(usuario.Email);
+        if (jaExiste != null) throw new InvalidOperationException("Email ja esta sendo utilizado");
 
-        var usuarioExistente = await _repository.ObterPorEmailAsync(dto.Email);
-        if (usuarioExistente != null)
-            throw new ArgumentException("Já existe um usuário com esse email.");
+        var id = await _repository.CriarAsync(usuario);
 
-        // Aqui você pode hashear a senha antes de salvar
-        var usuario = new Usuario()
-        {
-            Nome = dto.Nome,
-            Email = dto.Email,
-            Senha = dto.Senha // para produção: usar hash!
-        };
+        var criado = await _repository.ObterPorIdAsync(id);
+        if (criado == null) throw new Exception("Falha ao criar usuário");
 
-        return await _repository.InserirAsync(usuario);
+        return criado;
+    }
+
+    public async Task<Usuario> Login(string email, string senha) {
+        var usuario = await _repository.ObterPorEmailSenhaAsync(email, senha);
+        if (usuario == null) throw new UnauthorizedAccessException("Email ou senha inválidos");
+        return usuario;
+    }
+
+    public async Task<Usuario> ObterPorId(int id) {
+        var usuario = await _repository.ObterPorIdAsync(id);
+        if (usuario == null) throw new KeyNotFoundException("Usuário não encontrado");
+        return usuario;
+    }
+
+    public async Task<Usuario> Atualizar(int id, Usuario usuario) {
+        var existente = await _repository.ObterPorIdAsync(id);
+        if (existente == null) throw new KeyNotFoundException("Usuário não encontrado");
+
+        usuario.Id = id;
+        await _repository.AtualizarAsync(usuario);
+        return usuario;
+    }
+
+    public async Task Deletar(int id) {
+        var existente = await _repository.ObterPorIdAsync(id);
+        if (existente == null) throw new KeyNotFoundException("Usuário não encontrado");
+
+        await _repository.DeletarAsync(id);
     }
 }
+
