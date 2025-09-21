@@ -58,9 +58,13 @@ public class ProdutoController : ControllerBase {
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int limit, [FromQuery] int offset) {
+    public async Task<IActionResult> Get(
+        [FromQuery] int limit,
+        [FromQuery] int offset,
+        [FromQuery] string? nome = null
+    ) {
         try {
-            var resultado = await _service.ObterTodos(limit, offset);
+            var resultado = await _service.ObterTodos(limit, offset, nome);
             return Ok(resultado);
         } catch (ArgumentException ex) {
             return BadRequest(ex.Message);
@@ -69,4 +73,3 @@ public class ProdutoController : ControllerBase {
         }
     }
 }
-

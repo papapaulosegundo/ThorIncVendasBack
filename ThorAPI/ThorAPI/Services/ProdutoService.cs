@@ -64,10 +64,10 @@ public class ProdutoService {
         return produto;
     }
 
-    internal async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset) {
+    internal async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset, string? nome = null) {
         if (limit == 0) throw new ArgumentException("A variável 'limit' não pode ser 0");
 
-        var produtos = await _produtoRepository.ObterTodosAsync(limit, offset);
+        var produtos = await _produtoRepository.ObterTodosAsync(limit, offset, nome);
 
         var produtosComTagsTasks = produtos.Select(async produto => {
             if (produto.IdTagTipo != null) {
@@ -77,9 +77,7 @@ public class ProdutoService {
             return produto;
         });
 
-        var produtosComTags = await Task.WhenAll(produtosComTagsTasks);
-
-        return produtosComTags;
+        return await Task.WhenAll(produtosComTagsTasks);
     }
-}
 
+}

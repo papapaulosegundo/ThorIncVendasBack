@@ -89,7 +89,11 @@ public class ProdutoRepository {
         return await conn.QueryFirstOrDefaultAsync<Produto>(sql, new { Id = id });
     }
 
-    internal async Task<IEnumerable<Produto>> ObterTodosAsync(int limit, int offset) {
+    internal async Task<IEnumerable<Produto>> ObterTodosAsync(
+        int limit, 
+        int offset, 
+        string? nome = null
+    ) {
         var sql = @"
             SELECT 
                 id, 
@@ -101,15 +105,25 @@ public class ProdutoRepository {
                 criado_em AS CriadoEm, 
                 atualizado_em AS AtualizadoEm, 
                 id_tag_tipo AS IdTagTipo
-            FROM 
-                produto
+            FROM produto
+        ";
+
+        if (!string.IsNullOrEmpty(nome)) {
+            sql += @" 
+                WHERE 
+                    nome ILIKE @Nome
+            ";
+        }
+
+        sql += @"
             LIMIT 
                 @Limit 
             OFFSET 
                 @Offset
         ";
-        using var conn = Connection;
-        return await conn.QueryAsync<Produto>(sql, new { Limit = limit, Offset = offset });
-    }
-}
 
+        using var conn = Connection;
+        return await conn.QueryAsync<Produto>(sql, new { Limit = limit, Offset = offset, Nome = $"%{nome}%" });
+    }
+
+}
