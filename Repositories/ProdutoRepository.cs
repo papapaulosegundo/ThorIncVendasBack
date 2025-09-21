@@ -21,7 +21,6 @@ public class ProdutoRepository {
                 descricao, 
                 imagem, 
                 preco, 
-                quantidade, 
                 id_tag_tipo
             ) 
             VALUES (
@@ -29,7 +28,6 @@ public class ProdutoRepository {
                 @Descricao, 
                 @Imagem, 
                 @Preco, 
-                @Quantidade, 
                 @IdTagTipo
             ) 
             RETURNING id";
@@ -46,14 +44,13 @@ public class ProdutoRepository {
                 descricao = @Descricao,
                 imagem = @Imagem,
                 preco = @Preco,
-                quantidade = @Quantidade,
                 atualizado_em = NOW(),
                 id_tag_tipo = @IdTagTipo
             WHERE 
                 id = @Id
         ";
         using var conn = Connection;
-        await conn.ExecuteAsync(sql, new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.Quantidade, dto.IdTagTipo });
+        await conn.ExecuteAsync(sql, new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.IdTagTipo });
     }
 
     internal async Task DeletarPorIdAsync(int id) {
@@ -76,7 +73,6 @@ public class ProdutoRepository {
                 descricao, 
                 imagem, 
                 preco, 
-                quantidade, 
                 criado_em AS CriadoEm, 
                 atualizado_em AS AtualizadoEm, 
                 id_tag_tipo AS IdTagTipo
@@ -101,7 +97,6 @@ public class ProdutoRepository {
                 descricao, 
                 imagem, 
                 preco, 
-                quantidade, 
                 criado_em AS CriadoEm, 
                 atualizado_em AS AtualizadoEm, 
                 id_tag_tipo AS IdTagTipo
