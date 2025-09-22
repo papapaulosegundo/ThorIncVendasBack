@@ -29,6 +29,9 @@ builder.Services.AddScoped<TagTipoService>();
 builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<ProdutoService>();
 
+builder.Services.AddScoped<CarrinhoRepository>();
+builder.Services.AddScoped<CarrinhoService>();
+
 var app = builder.Build();
 
 app.UseCors("vite");
@@ -46,5 +49,7 @@ app.UseCors(MyCors);
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<Auth>();
 
 app.Run();

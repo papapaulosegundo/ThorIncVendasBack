@@ -34,10 +34,10 @@ public class ProdutoController : ControllerBase {
             };
 
             var resultado = await _service.Criar(produto);
-            return Ok(resultado); // se preferir: CreatedAtAction(nameof(Get), new { id = resultado.Id }, resultado);
-        }
-        catch (Exception ex)
-        {
+            return StatusCode(201, resultado); // se preferir: CreatedAtAction(nameof(Get), new { id = resultado.Id }, resultado);
+        } catch (InvalidOperationException ex) {
+            return StatusCode(400, ex.Message);
+        } catch (Exception ex) {
             return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
         }
     }
@@ -59,6 +59,8 @@ public class ProdutoController : ControllerBase {
         try {
             await _service.DeletarPorId(id);
             return NoContent();
+        } catch (InvalidOperationException ex) {
+            return StatusCode(400, ex.Message);
         } catch (KeyNotFoundException ex) {
             return NotFound(ex.Message);
         } catch (Exception ex) {

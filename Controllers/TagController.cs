@@ -55,6 +55,9 @@ public class TagController : ControllerBase {
             var resultado = await _service.ObterPorId(id);
             if (resultado == null) return NotFound();
             return Ok(resultado);
+
+        } catch (KeyNotFoundException ex) {
+            return StatusCode(401, ex.Message);
         } catch (Exception ex) {
             return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
         }

@@ -19,7 +19,7 @@ public class CarrinhoRepository {
             SELECT 
                 id_usuario as IdUsuario,
                 id_produto as IdProduto, 
-                quantiade as Quantiade 
+                quantidade as Quantiade 
             FROM 
                 carrinho 
             WHERE 
@@ -77,24 +77,23 @@ public class CarrinhoRepository {
     internal async Task<IEnumerable<(Carrinho Carrinho, int Preco, string Nome)>> ObterTodosAsync(int idUsuario) {
         var sql = @"
             SELECT 
-                c.id_usuario, 
-                c.id_produto, 
-                c.quantidade, 
-                SUM(p.preco), 
-                p.nome
+                c.id_usuario as IdUsuario, 
+                c.id_produto as IdProduto,  
+                c.quantidade as Quantidade, 
+                p.preco as Preco, 
+                p.nome as Nome
             FROM 
                 carrinho c
                 JOIN produto p ON p.id = c.id_produto
             WHERE 
                 c.id_usuario = @IdUsuario
-            GROUB BY 
-                c.id_produto
         ";
         using var conn = Connection;
         return await conn.QueryAsync<Carrinho, int, string, (Carrinho, int, string)>(
             sql,
             (c, preco, nome) => (c, preco, nome),
-            new { IdUsuario = idUsuario }
+            new { IdUsuario = idUsuario },
+            splitOn: "Preco,Nome" 
         );
     }
 

@@ -11,8 +11,13 @@ public class TagTipoService {
     }
 
     public async Task<TagTipo> Atualiza(int id, TagTipo tagTipo) {
-        var existente = await _repository.ObterPorNomeAsync(tagTipo.Nome);
-        if (existente == null) throw new InvalidOperationException("O tipo de tag não foi encontrado");
+        var existente = _repository.ObterPorIdAsync(id); 
+        if (existente == null) throw new KeyNotFoundException("O tipo de tag não foi encontrado");
+
+        var conflito = await _repository.ObterPorNomeAsync(tagTipo.Nome);
+        if (conflito != null) {
+            throw new InvalidOperationException("Este nome de tipo de tag ja esta sendo utilizado");
+        }
 
         await _repository.Atualiza(id, tagTipo);
 

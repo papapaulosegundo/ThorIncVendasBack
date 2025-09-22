@@ -42,12 +42,13 @@ public class CarrinhoService {
         var produtos = itens.Select(i => {
             total += i.Preco * i.Carrinho.Quantidade;
             return new {
+                IdProduto = i.Carrinho.IdProduto,
                 Produto = i.Nome,
                 Quantidade = i.Carrinho.Quantidade,
                 PrecoUnitario = i.Preco,
                 PrecoTotal = i.Preco * i.Carrinho.Quantidade
             };
-        });
+        }).ToList();
 
         return new { Total = total, Produtos = produtos };
     }

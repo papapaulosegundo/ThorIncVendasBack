@@ -5,14 +5,21 @@ namespace ThorAPI.Services;
 
 public class ProdutoService {
     private readonly ProdutoRepository _produtoRepository;
+    private readonly TagTipoRepository _tagTipoRepository;
     private readonly TagRepository _tagRepository;
 
-    public ProdutoService(ProdutoRepository produtoRepository, TagRepository tagRepository) {
+    public ProdutoService(ProdutoRepository produtoRepository, TagTipoRepository tagTipoRepository, TagRepository tagRepository) {
         _produtoRepository = produtoRepository;
+        _tagTipoRepository = tagTipoRepository;
         _tagRepository = tagRepository;
     }
 
     internal async Task<Produto> Criar(Produto dto) {
+        if (dto.IdTagTipo != null) {
+            var tagTipo = await _tagTipoRepository.ObterPorIdAsync((int) dto.IdTagTipo);
+            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe"); 
+        }
+
         var novoId = await _produtoRepository.InserirAsync(dto);
         var produto = await _produtoRepository.ObterPorIdAsync(novoId);
         if (produto == null) throw new Exception("Falha ao criar e recuperar o Produto");
@@ -26,6 +33,11 @@ public class ProdutoService {
     }
 
     internal async Task<Produto> Atualizar(int id, Produto dto) {
+        if (dto.IdTagTipo != null) {
+            var tagTipo = await _tagTipoRepository.ObterPorIdAsync((int) dto.IdTagTipo);
+            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe"); 
+        }
+
         var existente = await _produtoRepository.ObterPorIdAsync(id);
         if (existente == null) throw new KeyNotFoundException("Produto não encontrado para atualização");
 
