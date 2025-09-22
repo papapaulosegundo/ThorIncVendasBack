@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ThorAPI.Models;
 using ThorAPI.Services;
+using ThorAPI.Models.DTOs;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -12,11 +13,31 @@ public class ProdutoController : ControllerBase {
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] Produto dto) {
-        try {
-            var resultado = await _service.Criar(dto);
-            return Ok(resultado);
-        } catch (Exception ex) {
+    public async Task<IActionResult> Post([FromBody] ProdutoCreateDto body)
+    {
+        try
+        {
+            if (body is null) return BadRequest("Body vazio.");
+            if (string.IsNullOrWhiteSpace(body.Nome))
+                return BadRequest("Nome é obrigatório.");
+            if (body.Preco <= 0)
+                return BadRequest("Preco deve ser maior que 0 (em centavos).");
+
+            // mapear DTO -> entidade
+            var produto = new Produto
+            {
+                Nome      = body.Nome,
+                Descricao = body.Descricao,
+                Imagem    = body.Imagem,
+                Preco     = body.Preco,
+                IdTagTipo = body.IdTagTipo
+            };
+
+            var resultado = await _service.Criar(produto);
+            return Ok(resultado); // se preferir: CreatedAtAction(nameof(Get), new { id = resultado.Id }, resultado);
+        }
+        catch (Exception ex)
+        {
             return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
         }
     }
