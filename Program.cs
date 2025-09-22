@@ -4,6 +4,15 @@ using ThorAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var MyCors = "_myCors";
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy(MyCors, p =>
+        p.WithOrigins("http://localhost:5173")
+         .AllowAnyHeader()
+         .AllowAnyMethod());
+});
+
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
@@ -22,6 +31,8 @@ builder.Services.AddScoped<ProdutoService>();
 
 var app = builder.Build();
 
+app.UseCors("vite");
+
 app.MapOpenApi();
 
 if (app.Environment.IsDevelopment()) {
@@ -29,6 +40,8 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(MyCors);
 
 app.UseAuthorization();
 
