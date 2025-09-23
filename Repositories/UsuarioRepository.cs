@@ -53,11 +53,11 @@ public class UsuarioRepository {
     public async Task<Usuario?> ObterPorEmailAsync(string email) {
         const string sql = @"
             SELECT 
-                id,
-                cpf,
-                nome, 
-                email,
-                senha 
+                id as Id,
+                cpf as Cpf,
+                nome as Nome, 
+                email as Email,
+                senha as Senha 
             FROM 
                 usuario 
             WHERE 

@@ -1,19 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ThorAPI.Models;
 using ThorAPI.Services;
+using ThorAPI.Utils;
 
 namespace ThorAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsuariosController : ControllerBase {
+public class UsuarioController : ControllerBase {
     private readonly UsuarioService _service;
 
-    public UsuariosController(UsuarioService service) {
+    public UsuarioController(UsuarioService service) {
         _service = service;
     }
 
-    [HttpPost]
+    [HttpPost("signup")]
     public async Task<IActionResult> Criar([FromBody] Usuario usuario) {
         try {
             var criado = await _service.Criar(usuario);
@@ -30,7 +31,10 @@ public class UsuariosController : ControllerBase {
     public async Task<IActionResult> Login([FromBody] Usuario login) {
         try {
             var usuario = await _service.Login(login.Email, login.Senha);
-            return Ok(usuario);
+            return Ok(new { 
+                Usuario = usuario, 
+                Jwt = Jwt.GenerateToken(usuario) 
+            });
         } catch (UnauthorizedAccessException ex) {
             return Unauthorized(ex.Message);
         }

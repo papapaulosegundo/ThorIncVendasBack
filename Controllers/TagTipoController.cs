@@ -18,8 +18,10 @@ public class TagTipoController : ControllerBase {
         try {
             var resultado = await _service.Atualiza(id, dto);
             return Ok(resultado);
-        } catch (InvalidOperationException ex) {
+        } catch (KeyNotFoundException ex) {
             return NotFound(ex.Message);
+        } catch (InvalidOperationException ex) {
+            return Conflict(ex.Message);
         } catch (Exception ex) {
             return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
         }
