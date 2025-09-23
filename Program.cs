@@ -32,6 +32,9 @@ builder.Services.AddScoped<ProdutoService>();
 builder.Services.AddScoped<CarrinhoRepository>();
 builder.Services.AddScoped<CarrinhoService>();
 
+builder.Services.AddScoped<EnderecoRepository>();
+builder.Services.AddScoped<EnderecoService>();
+
 var app = builder.Build();
 
 app.UseCors("vite");
