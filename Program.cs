@@ -29,6 +29,9 @@ builder.Services.AddScoped<TagTipoService>();
 builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<ProdutoService>();
 
+builder.Services.AddScoped<EnderecoRepository>();
+builder.Services.AddScoped<EnderecoService>();
+
 var app = builder.Build();
 
 app.UseCors("vite");
