@@ -20,13 +20,15 @@ public class UsuarioRepository {
                 cpf, 
                 nome, 
                 email, 
-                senha
+                senha,
+                tipo
             )
             VALUES (
                 @Cpf, 
                 @Nome, 
                 @Email, 
-                @Senha
+                @Senha,
+                'usuario'
             )
             RETURNING id";
         using var conn = Connection;
@@ -40,7 +42,8 @@ public class UsuarioRepository {
                 cpf,
                 nome,
                 email,
-                senha
+                senha,
+                tipo
             FROM 
                 usuario 
             WHERE 
@@ -53,11 +56,12 @@ public class UsuarioRepository {
     public async Task<Usuario?> ObterPorEmailAsync(string email) {
         const string sql = @"
             SELECT 
-                id as Id,
-                cpf as Cpf,
-                nome as Nome, 
-                email as Email,
-                senha as Senha 
+                id AS ""Id"",
+                cpf AS ""Cpf"",
+                nome AS ""Nome"", 
+                email AS ""Email"",
+                senha AS ""Senha"",
+                tipo AS ""Tipo""
             FROM 
                 usuario 
             WHERE 
@@ -74,7 +78,8 @@ public class UsuarioRepository {
                 cpf,
                 nome, 
                 email,
-                senha 
+                senha,
+                tipo
             FROM 
                 usuario 
             WHERE 

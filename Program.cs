@@ -14,8 +14,8 @@ builder.Services.AddCors(opts =>
 });
 
 builder.Services.AddControllers();
-
 builder.Services.AddOpenApi();
+
 
 builder.Services.AddScoped<UsuarioRepository>();
 builder.Services.AddScoped<UsuarioService>();
@@ -37,22 +37,22 @@ builder.Services.AddScoped<EnderecoService>();
 
 var app = builder.Build();
 
-app.UseCors("vite");
-
-app.MapOpenApi();
-
-if (app.Environment.IsDevelopment()) {
-    app.MapScalarApiReference();
-}
-
 app.UseHttpsRedirection();
 
 app.UseCors(MyCors);
 
-app.UseAuthorization();
+app.MapOpenApi();
 
-app.MapControllers();
+if (app.Environment.IsDevelopment())
+{
+    app.MapScalarApiReference();
+}
+
+app.UseRouting();
 
 app.UseMiddleware<Auth>();
 
+app.UseAuthorization();
+
+app.MapControllers();
 app.Run();

@@ -11,6 +11,8 @@ public class UsuarioService {
     }
 
     public async Task<Usuario> Criar(Usuario usuario) {
+        usuario.Tipo = "usuario";       
+        
         var jaExiste = await _repository.ObterPorEmailAsync(usuario.Email);
         if (jaExiste != null) throw new InvalidOperationException("Email ja esta sendo utilizado");
 
