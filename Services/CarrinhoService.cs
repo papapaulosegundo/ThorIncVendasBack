@@ -3,18 +3,23 @@ using ThorAPI.Repositories;
 
 namespace ThorAPI.Services;
 
-public class CarrinhoService {
-    private readonly CarrinhoRepository _repository;
+public class CarrinhoService
+{
+    private readonly IUnitOfWork _uof;
 
-    public CarrinhoService(CarrinhoRepository repository) {
-        _repository = repository;
+    public CarrinhoService(IUnitOfWork uof)
+    {
+        _uof = uof;
     }
 
-    internal async Task<object> AtualizarCarrinho(int idUsuario, int idProduto, int quantidade) {
-        var existente = await _repository.ObterAsync(idUsuario, idProduto);
+    public async Task<object> AtualizarCarrinho(int idUsuario, int idProduto, int quantidade)
+    {
+        var existente = await _uof.CarrinhoRepository.ObterAsync(idUsuario, idProduto);
 
-        if (existente == null && quantidade > 0) {
-            await _repository.InserirAsync(new Carrinho {
+        if (existente == null && quantidade > 0)
+        {
+            await _uof.CarrinhoRepository.InserirAsync(new Carrinho
+            {
                 IdUsuario = idUsuario,
                 IdProduto = idProduto,
                 Quantidade = quantidade
@@ -22,26 +27,34 @@ public class CarrinhoService {
             return await ObterCarrinho(idUsuario);
         }
 
-        if (existente == null) {
+        if (existente == null)
+        {
             throw new InvalidOperationException("O item precisa ter uma quantidade de pelo menos um para ser incluido");
         }
 
-        if (quantidade <= 0) {
-            await _repository.RemoverAsync(idUsuario, idProduto);
-        } else {
-            await _repository.AtualizarQuantidadeAsync(idUsuario, idProduto, quantidade);
+        if (quantidade <= 0)
+        {
+            await _uof.CarrinhoRepository.RemoverAsync(idUsuario, idProduto);
         }
+        else
+        {
+            await _uof.CarrinhoRepository.AtualizarQuantidadeAsync(idUsuario, idProduto, quantidade);
+        }
+
         return await ObterCarrinho(idUsuario);
     }
 
-    internal async Task<object> ObterCarrinho(int idUsuario) {
-        var itens = await _repository.ObterTodosAsync(idUsuario);
+    public async Task<object> ObterCarrinho(int idUsuario)
+    {
+        var itens = await _uof.CarrinhoRepository.ObterTodosAsync(idUsuario);
 
         var total = 0;
 
-        var produtos = itens.Select(i => {
+        var produtos = itens.Select(i =>
+        {
             total += i.Preco * i.Carrinho.Quantidade;
-            return new {
+            return new
+            {
                 IdProduto = i.Carrinho.IdProduto,
                 Produto = i.Nome,
                 Quantidade = i.Carrinho.Quantidade,
@@ -53,8 +66,8 @@ public class CarrinhoService {
         return new { Total = total, Produtos = produtos };
     }
 
-    internal async Task RemoverCarrinho(int idUsuario) {
-        await _repository.RemoverTodosAsync(idUsuario);
+    public async Task RemoverCarrinho(int idUsuario)
+    {
+        await _uof.CarrinhoRepository.RemoverTodosAsync(idUsuario);
     }
 }
-

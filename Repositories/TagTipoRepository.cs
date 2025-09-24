@@ -5,90 +5,50 @@ using ThorAPI.Models;
 
 namespace ThorAPI.Repositories;
 
-public class TagTipoRepository {
-    private readonly string _connectionString;
+public class TagTipoRepository : ITagTipoRepository
+{
+    private readonly IDbTransaction _transaction;
+    private IDbConnection Connection => _transaction.Connection;
 
-    public TagTipoRepository(IConfiguration configuration) {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+    public TagTipoRepository(IDbTransaction transaction)
+    {
+        _transaction = transaction;
     }
 
-    private IDbConnection Connection => new NpgsqlConnection(_connectionString);
-
-    public async Task<int> InserirAsync(TagTipo tagTipo) {
-        using var conn = Connection;
-        string sql = @"
-            INSERT INTO tag_tipo (nome)
-            VALUES (@Nome)
-            RETURNING id;";
-        return await conn.ExecuteScalarAsync<int>(sql, new { tagTipo.Nome });
+    public async Task<int> InserirAsync(TagTipo tagTipo)
+    {
+        var sql = "INSERT INTO tag_tipo (nome) VALUES (@Nome) RETURNING id;";
+        return await Connection.ExecuteScalarAsync<int>(sql, new { tagTipo.Nome }, transaction: _transaction);
     }
 
-    public async Task<TagTipo?> ObterPorIdAsync(int id) {
-        using var conn = Connection;
-        string sql = @"
-            SELECT 
-                id,
-                nome 
-            FROM 
-                tag_tipo 
-            WHERE 
-                id = @Id
-        ";
-        return await conn.QueryFirstOrDefaultAsync<TagTipo>(sql, new { Id = id });
+    public async Task<TagTipo?> ObterPorIdAsync(int id)
+    {
+        var sql = "SELECT id, nome FROM tag_tipo WHERE id = @Id";
+        return await Connection.QueryFirstOrDefaultAsync<TagTipo>(sql, new { Id = id }, transaction: _transaction);
     }
 
-    public async Task<IEnumerable<TagTipo>> ObterTodosAsync(int limit, int offset) {
-        using var conn = Connection;
-        string sql = @"
-            SELECT 
-                id,
-                nome
-            FROM 
-                tag_tipo 
-            LIMIT 
-                @Limit 
-            OFFSET 
-                @Offset
-        ";
-        return await conn.QueryAsync<TagTipo>(sql, new { Limit = limit, Offset = offset });
+    public async Task<IEnumerable<TagTipo>> ObterTodosAsync(int limit, int offset)
+    {
+        var sql = "SELECT id, nome FROM tag_tipo LIMIT @Limit OFFSET @Offset";
+        return await Connection.QueryAsync<TagTipo>(sql, new { Limit = limit, Offset = offset },
+            transaction: _transaction);
     }
 
-    internal async Task Atualiza(int id, TagTipo tagTipo) {
-        using var conn = Connection;
-        string sql = @"
-            UPDATE 
-                tag_tipo
-            SET 
-                nome = @Nome 
-            WHERE 
-                id = @Id
-        ";
-        await conn.ExecuteAsync(sql, new { Id = id, Nome = tagTipo.Nome });
+    public async Task Atualiza(int id, TagTipo tagTipo)
+    {
+        var sql = "UPDATE tag_tipo SET nome = @Nome WHERE id = @Id";
+        await Connection.ExecuteAsync(sql, new { Id = id, Nome = tagTipo.Nome }, transaction: _transaction);
     }
 
-    internal async Task DeletarPorIdAsync(int id) {
-        using var conn = Connection;
-        string sql = @"
-            DELETE 
-            FROM 
-                tag_tipo 
-            WHERE 
-                id = @Id
-        ";
-        await conn.ExecuteAsync(sql, new { Id = id });
+    public async Task DeletarPorIdAsync(int id)
+    {
+        var sql = "DELETE FROM tag_tipo WHERE id = @Id";
+        await Connection.ExecuteAsync(sql, new { Id = id }, transaction: _transaction);
     }
 
-    internal async Task<TagTipo?> ObterPorNomeAsync(string nome) {
-        using var conn = Connection;
-        string sql = @"
-            SELECT 
-                id, 
-                nome 
-            FROM 
-                tag_tipo 
-            WHERE 
-                nome = @Nome
-        ";
-        return await conn.QueryFirstOrDefaultAsync<TagTipo>(sql, new { Nome = nome });
+    public async Task<TagTipo?> ObterPorNomeAsync(string nome)
+    {
+        var sql = "SELECT id, nome FROM tag_tipo WHERE nome = @Nome";
+        return await Connection.QueryFirstOrDefaultAsync<TagTipo>(sql, new { Nome = nome }, transaction: _transaction);
     }
 }

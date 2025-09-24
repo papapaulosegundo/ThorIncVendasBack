@@ -1,20 +1,21 @@
-﻿using System.Data;
+using System.Data;
 using Dapper;
-using Npgsql;
 using ThorAPI.Models;
 
 namespace ThorAPI.Repositories;
 
-public class UsuarioRepository {
-    private readonly string _connectionString;
+public class UsuarioRepository : IUsuarioRepository
+{
+    private readonly IDbTransaction _transaction;
+    private IDbConnection Connection => _transaction.Connection;
 
-    public UsuarioRepository(IConfiguration configuration) {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+    public UsuarioRepository(IDbTransaction transaction)
+    {
+        _transaction = transaction;
     }
 
-    private NpgsqlConnection Connection => new(_connectionString);
-
-    public async Task<int> CriarAsync(Usuario usuario) {
+    public async Task<int> CriarAsync(Usuario usuario)
+    {
         const string sql = @"
             INSERT INTO usuario (
                 cpf, 
@@ -28,93 +29,75 @@ public class UsuarioRepository {
                 @Nome, 
                 @Email, 
                 @Senha,
-                'usuario'
+                @Tipo
             )
             RETURNING id";
-        using var conn = Connection;
-        return await conn.ExecuteScalarAsync<int>(sql, usuario);
+        return await Connection.ExecuteScalarAsync<int>(sql, usuario, transaction: _transaction);
     }
 
-    public async Task<Usuario?> ObterPorIdAsync(int id) {
+    public async Task<Usuario?> ObterPorIdAsync(int id)
+    {
         const string sql = @"
             SELECT 
-                id,
-                cpf,
-                nome,
-                email,
-                senha,
-                tipo
-            FROM 
-                usuario 
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        return await conn.QueryFirstOrDefaultAsync<Usuario>(sql, new { Id = id });
-    }
-
-    public async Task<Usuario?> ObterPorEmailAsync(string email) {
-        const string sql = @"
-            SELECT 
-                id AS ""Id"",
-                cpf AS ""Cpf"",
-                nome AS ""Nome"", 
+                id    AS ""Id"",
+                cpf   AS ""Cpf"",
+                nome  AS ""Nome"",
                 email AS ""Email"",
                 senha AS ""Senha"",
-                tipo AS ""Tipo""
-            FROM 
-                usuario 
-            WHERE 
-                email = @Email 
-        ";
-        using var conn = Connection;
-        return await conn.QueryFirstOrDefaultAsync<Usuario>(sql, new { Email = email });
+                tipo  AS ""Tipo""
+            FROM usuario
+            WHERE id = @Id";
+        return await Connection.QueryFirstOrDefaultAsync<Usuario>(
+            sql, new { Id = id }, transaction: _transaction);
     }
 
-    public async Task<Usuario?> ObterPorEmailSenhaAsync(string email, string senha) {
+    public async Task<Usuario?> ObterPorEmailAsync(string email)
+    {
         const string sql = @"
             SELECT 
-                id,
-                cpf,
-                nome, 
-                email,
-                senha,
-                tipo
-            FROM 
-                usuario 
-            WHERE 
-                email = @Email 
-                AND senha = @Senha
-        ";
-        using var conn = Connection;
-        return await conn.QueryFirstOrDefaultAsync<Usuario>(sql, new { Email = email, Senha = senha });
+                id    AS ""Id"",
+                cpf   AS ""Cpf"",
+                nome  AS ""Nome"",
+                email AS ""Email"",
+                senha AS ""Senha"",
+                tipo  AS ""Tipo""
+            FROM usuario
+            WHERE email = @Email";
+        return await Connection.QueryFirstOrDefaultAsync<Usuario>(
+            sql, new { Email = email }, transaction: _transaction);
     }
 
-    public async Task AtualizarAsync(Usuario usuario) {
+    public async Task<Usuario?> ObterPorEmailSenhaAsync(string email, string senha)
+    {
         const string sql = @"
-            UPDATE 
-                usuario
-            SET 
-                cpf = @Cpf, 
-                nome = @Nome, 
-                email = @Email, 
-                senha = @Senha
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        await conn.ExecuteAsync(sql, usuario);
+            SELECT 
+                id    AS ""Id"",
+                cpf   AS ""Cpf"",
+                nome  AS ""Nome"",
+                email AS ""Email"",
+                senha AS ""Senha"",
+                tipo  AS ""Tipo""
+            FROM usuario
+            WHERE email = @Email AND senha = @Senha";
+        return await Connection.QueryFirstOrDefaultAsync<Usuario>(
+            sql, new { Email = email, Senha = senha }, transaction: _transaction);
     }
 
-    public async Task DeletarAsync(int id) {
+    public async Task AtualizarAsync(Usuario usuario)
+    {
         const string sql = @"
-            DELETE 
-            FROM 
-                usuario 
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        await conn.ExecuteAsync(sql, new { Id = id });
+            UPDATE usuario
+               SET cpf = @Cpf, 
+                   nome = @Nome, 
+                   email = @Email, 
+                   senha = @Senha
+             WHERE id = @Id";
+        await Connection.ExecuteAsync(sql, usuario, transaction: _transaction);
+    }
+
+    public async Task DeletarAsync(int id)
+    {
+        const string sql = @"DELETE FROM usuario WHERE id = @Id";
+        await Connection.ExecuteAsync(sql, new { Id = id }, transaction: _transaction);
     }
 }
