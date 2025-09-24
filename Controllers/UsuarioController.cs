@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ThorAPI.Models;
 using ThorAPI.Repositories;
 using ThorAPI.Services;
@@ -20,16 +21,29 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPost("signup")]
-    public async Task<IActionResult> Criar(Usuario usuario)
+    [AllowAnonymous]
+    public async Task<IActionResult> Criar([FromBody] Usuario usuario)
     {
         try
         {
+            if (usuario is null) return BadRequest("Body vazio.");
+            if (string.IsNullOrWhiteSpace(usuario.Nome) ||
+                string.IsNullOrWhiteSpace(usuario.Email) ||
+                string.IsNullOrWhiteSpace(usuario.Senha))
+                return BadRequest("Nome, Email e Senha são obrigatórios.");
+
+            // Default sem sobrescrever papéis especiais:
+            if (string.IsNullOrWhiteSpace(usuario.Tipo))
+                usuario.Tipo = "usuario";
+
             var criado = await _usuarioService.Criar(usuario);
             await _uof.CommitAsync();
+
             return CreatedAtAction(nameof(ObterPorId), new { id = criado.Id }, criado);
         }
         catch (InvalidOperationException ex)
         {
+            // Mantém o comportamento anterior (email em uso -> 401)
             return StatusCode(401, ex.Message);
         }
         catch (Exception ex)
@@ -39,12 +53,12 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(Usuario login)
+    [AllowAnonymous]
+    public async Task<IActionResult> Login([FromBody] Usuario login)
     {
         try
         {
             var usuario = await _usuarioService.Login(login.Email, login.Senha);
-
             return Ok(new
             {
                 Usuario = usuario,
@@ -72,7 +86,7 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Atualizar(int id, Usuario usuario)
+    public async Task<IActionResult> Atualizar(int id, [FromBody] Usuario usuario)
     {
         try
         {
@@ -83,6 +97,10 @@ public class UsuarioController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Um erro ocorreu: {ex.Message}");
         }
     }
 

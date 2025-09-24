@@ -1,4 +1,4 @@
-﻿using ThorAPI.Models;
+using ThorAPI.Models;
 using ThorAPI.Repositories;
 
 namespace ThorAPI.Services;
@@ -14,6 +14,9 @@ public class UsuarioService
 
     public async Task<Usuario> Criar(Usuario usuario)
     {
+        // Mantém o comportamento da main:
+        usuario.Tipo = "usuario";
+
         var jaExiste = await _uof.UsuarioRepository.ObterPorEmailAsync(usuario.Email);
         if (jaExiste != null) throw new InvalidOperationException("Email ja esta sendo utilizado");
 
@@ -46,8 +49,9 @@ public class UsuarioService
 
         usuario.Id = id;
         await _uof.UsuarioRepository.AtualizarAsync(usuario);
-        
-        return usuario;
+
+        return usuario; // se preferir, recarregue do repositório antes de retornar
+        // return await _uof.UsuarioRepository.ObterPorIdAsync(id) ?? usuario;
     }
 
     public async Task Deletar(int id)
