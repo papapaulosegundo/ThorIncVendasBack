@@ -5,120 +5,67 @@ using ThorAPI.Models;
 
 namespace ThorAPI.Repositories;
 
-public class ProdutoRepository {
-    private readonly string _connectionString;
+public class ProdutoRepository : IProdutoRepository
+{
+    private readonly IDbTransaction _transaction;
+    private IDbConnection Connection => _transaction.Connection;
 
-    public ProdutoRepository(IConfiguration configuration) {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+    public ProdutoRepository(IDbTransaction transaction)
+    {
+        _transaction = transaction;
     }
 
-    private IDbConnection Connection => new NpgsqlConnection(_connectionString);
-
-    internal async Task<int> InserirAsync(Produto dto) {
+    public async Task<int> InserirAsync(Produto dto)
+    {
         var sql = @"
-            INSERT INTO produto (
-                nome, 
-                descricao, 
-                imagem, 
-                preco, 
-                id_tag_tipo
-            ) 
-            VALUES (
-                @Nome, 
-                @Descricao, 
-                @Imagem, 
-                @Preco, 
-                @IdTagTipo
-            ) 
+            INSERT INTO produto (nome, descricao, imagem, preco, id_tag_tipo) 
+            VALUES (@Nome, @Descricao, @Imagem, @Preco, @IdTagTipo) 
             RETURNING id";
-        using var conn = Connection;
-        return await conn.ExecuteScalarAsync<int>(sql, dto);
+        return await Connection.ExecuteScalarAsync<int>(sql, dto, transaction: _transaction);
     }
 
-    internal async Task AtualizarAsync(int id, Produto dto) {
+    public async Task AtualizarAsync(int id, Produto dto)
+    {
         var sql = @"
-            UPDATE 
-                produto
-            SET 
-                nome = @Nome,
-                descricao = @Descricao,
-                imagem = @Imagem,
-                preco = @Preco,
-                atualizado_em = NOW(),
-                id_tag_tipo = @IdTagTipo
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        await conn.ExecuteAsync(sql, new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.IdTagTipo });
+            UPDATE produto
+            SET nome = @Nome, descricao = @Descricao, imagem = @Imagem, preco = @Preco, 
+                atualizado_em = NOW(), id_tag_tipo = @IdTagTipo
+            WHERE id = @Id";
+        await Connection.ExecuteAsync(sql,
+            new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.IdTagTipo }, transaction: _transaction);
     }
 
-    internal async Task DeletarPorIdAsync(int id) {
-        var sql = @"
-            DELETE 
-            FROM 
-                produto 
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        await conn.ExecuteAsync(sql, new { Id = id });
+    public async Task DeletarPorIdAsync(int id)
+    {
+        var sql = "DELETE FROM produto WHERE id = @Id";
+        await Connection.ExecuteAsync(sql, new { Id = id }, transaction: _transaction);
     }
 
-    internal async Task<Produto?> ObterPorIdAsync(int id) {
+    public async Task<Produto?> ObterPorIdAsync(int id)
+    {
         var sql = @"
-            SELECT 
-                id, 
-                nome, 
-                descricao, 
-                imagem, 
-                preco, 
-                criado_em AS CriadoEm, 
-                atualizado_em AS AtualizadoEm, 
-                id_tag_tipo AS IdTagTipo
-            FROM 
-                produto 
-            WHERE 
-                id = @Id
-        ";
-        using var conn = Connection;
-        return await conn.QueryFirstOrDefaultAsync<Produto>(sql, new { Id = id });
+            SELECT id, nome, descricao, imagem, preco, criado_em AS CriadoEm, 
+                   atualizado_em AS AtualizadoEm, id_tag_tipo AS IdTagTipo
+            FROM produto 
+            WHERE id = @Id";
+        return await Connection.QueryFirstOrDefaultAsync<Produto>(sql, new { Id = id }, transaction: _transaction);
     }
 
-    internal async Task<IEnumerable<Produto>> ObterTodosAsync(
-        int limit, 
-        int offset, 
-        string? nome = null
-    ) {
+    public async Task<IEnumerable<Produto>> ObterTodosAsync(int limit, int offset, string? nome = null)
+    {
         var sql = @"
-            SELECT 
-                id, 
-                nome, 
-                descricao, 
-                imagem, 
-                preco, 
-                criado_em AS CriadoEm, 
-                atualizado_em AS AtualizadoEm, 
-                id_tag_tipo AS IdTagTipo
-            FROM produto
-        ";
+            SELECT id, nome, descricao, imagem, preco, criado_em AS CriadoEm, 
+                   atualizado_em AS AtualizadoEm, id_tag_tipo AS IdTagTipo
+            FROM produto";
 
-        if (!string.IsNullOrEmpty(nome)) {
-            sql += @" 
-                WHERE 
-                    nome ILIKE @Nome
-            ";
+        if (!string.IsNullOrEmpty(nome))
+        {
+            sql += " WHERE nome ILIKE @Nome";
         }
 
-        sql += @"
-            LIMIT 
-                @Limit 
-            OFFSET 
-                @Offset
-        ";
+        sql += " LIMIT @Limit OFFSET @Offset";
 
-        using var conn = Connection;
-        return await conn.QueryAsync<Produto>(sql, new { Limit = limit, Offset = offset, Nome = $"%{nome}%" });
+        return await Connection.QueryAsync<Produto>(sql, new { Limit = limit, Offset = offset, Nome = $"%{nome}%" },
+            transaction: _transaction);
     }
-
 }

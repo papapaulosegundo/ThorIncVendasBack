@@ -3,93 +3,103 @@ using ThorAPI.Repositories;
 
 namespace ThorAPI.Services;
 
-public class ProdutoService {
-    private readonly ProdutoRepository _produtoRepository;
-    private readonly TagTipoRepository _tagTipoRepository;
-    private readonly TagRepository _tagRepository;
+public class ProdutoService
+{
+    private IUnitOfWork _uof;
 
-    public ProdutoService(ProdutoRepository produtoRepository, TagTipoRepository tagTipoRepository, TagRepository tagRepository) {
-        _produtoRepository = produtoRepository;
-        _tagTipoRepository = tagTipoRepository;
-        _tagRepository = tagRepository;
+    public ProdutoService(IUnitOfWork uof)
+    {
+        _uof = uof;
     }
 
-    internal async Task<Produto> Criar(Produto dto) {
-        if (dto.IdTagTipo != null) {
-            var tagTipo = await _tagTipoRepository.ObterPorIdAsync((int) dto.IdTagTipo);
-            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe"); 
+    public async Task<Produto> Criar(Produto dto)
+    {
+        if (dto.IdTagTipo != null)
+        {
+            var tagTipo = await _uof.TagTipoRepository.ObterPorIdAsync((int)dto.IdTagTipo);
+            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe");
         }
 
-        var novoId = await _produtoRepository.InserirAsync(dto);
-        var produto = await _produtoRepository.ObterPorIdAsync(novoId);
+        var novoId = await _uof.ProdutoRepository.InserirAsync(dto);
+        var produto = await _uof.ProdutoRepository.ObterPorIdAsync(novoId);
         if (produto == null) throw new Exception("Falha ao criar e recuperar o Produto");
 
-        if (produto.IdTagTipo != null) {
-            var tags = await _tagRepository.ObterTodosAsync(1000, 0, (int) produto.IdTagTipo);
+        if (produto.IdTagTipo != null)
+        {
+            var tags = await _uof.TagRepository.ObterTodosAsync(1000, 0, (int)produto.IdTagTipo);
             produto.tags = tags.ToArray();
         }
 
         return produto;
     }
 
-    internal async Task<Produto> Atualizar(int id, Produto dto) {
-        if (dto.IdTagTipo != null) {
-            var tagTipo = await _tagTipoRepository.ObterPorIdAsync((int) dto.IdTagTipo);
-            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe"); 
-        }
-
-        var existente = await _produtoRepository.ObterPorIdAsync(id);
+    public async Task<Produto> Atualizar(int id, Produto dto)
+    {
+        var existente = await _uof.ProdutoRepository.ObterPorIdAsync(id);
         if (existente == null) throw new KeyNotFoundException("Produto não encontrado para atualização");
 
-        await _produtoRepository.AtualizarAsync(id, dto);
+        if (dto.IdTagTipo != null)
+        {
+            var tagTipo = await _uof.TagTipoRepository.ObterPorIdAsync((int)dto.IdTagTipo);
+            if (tagTipo == null) throw new InvalidOperationException("O tipo de tag solicitado não existe");
+        }
 
-        var atualizado = await _produtoRepository.ObterPorIdAsync(id);
+        await _uof.ProdutoRepository.AtualizarAsync(id, dto);
+
+        var atualizado = await _uof.ProdutoRepository.ObterPorIdAsync(id);
         if (atualizado == null) throw new Exception("Falha ao atualizar e recuperar o Produto");
 
-        if (atualizado.IdTagTipo != null) {
-            var tags = await _tagRepository.ObterTodosAsync(1000, 0, (int) atualizado.IdTagTipo);
+        if (atualizado.IdTagTipo != null)
+        {
+            var tags = await _uof.TagRepository.ObterTodosAsync(1000, 0, (int)atualizado.IdTagTipo);
             atualizado.tags = tags.ToArray();
         }
 
         return atualizado;
     }
 
-    internal async Task DeletarPorId(int id) {
-        var existente = await _produtoRepository.ObterPorIdAsync(id);
+    public async Task DeletarPorId(int id)
+    {
+        var existente = await _uof.ProdutoRepository.ObterPorIdAsync(id);
         if (existente == null) throw new KeyNotFoundException("Produto não encontrado para exclusão");
 
-        await _produtoRepository.DeletarPorIdAsync(id);
+        await _uof.ProdutoRepository.DeletarPorIdAsync(id);
 
-        var aindaExiste = await _produtoRepository.ObterPorIdAsync(id);
+        var aindaExiste = await _uof.ProdutoRepository.ObterPorIdAsync(id);
         if (aindaExiste != null) throw new Exception("Não foi possível deletar este Produto");
     }
 
-    internal async Task<Produto> ObterPorId(int id) {
-        var produto = await _produtoRepository.ObterPorIdAsync(id);
+    public async Task<Produto> ObterPorId(int id)
+    {
+        var produto = await _uof.ProdutoRepository.ObterPorIdAsync(id);
         if (produto == null) throw new KeyNotFoundException("Produto não encontrado");
 
-        if (produto.IdTagTipo != null) {
-            var tags = await _tagRepository.ObterTodosAsync(1000, 0, (int) produto.IdTagTipo);
+        if (produto.IdTagTipo != null)
+        {
+            var tags = await _uof.TagRepository.ObterTodosAsync(1000, 0, (int)produto.IdTagTipo);
             produto.tags = tags.ToArray();
         }
 
         return produto;
     }
 
-    internal async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset, string? nome = null) {
+    public async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset, string? nome = null)
+    {
         if (limit == 0) throw new ArgumentException("A variável 'limit' não pode ser 0");
 
-        var produtos = await _produtoRepository.ObterTodosAsync(limit, offset, nome);
+        var produtos = await _uof.ProdutoRepository.ObterTodosAsync(limit, offset, nome);
 
-        var produtosComTagsTasks = produtos.Select(async produto => {
-            if (produto.IdTagTipo != null) {
-                var tags = await _tagRepository.ObterTodosAsync(1000, 0, (int)produto.IdTagTipo);
+        var produtosComTagsTasks = produtos.Select(async produto =>
+        {
+            if (produto.IdTagTipo != null)
+            {
+                var tags = await _uof.TagRepository.ObterTodosAsync(1000, 0, (int)produto.IdTagTipo);
                 produto.tags = tags.ToArray();
             }
+
             return produto;
         });
 
         return await Task.WhenAll(produtosComTagsTasks);
     }
-
 }

@@ -9,31 +9,23 @@ builder.Services.AddCors(opts =>
 {
     opts.AddPolicy(MyCors, p =>
         p.WithOrigins("http://localhost:5173")
-         .AllowAnyHeader()
-         .AllowAnyMethod());
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddScoped<UsuarioRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddScoped<UsuarioService>();
-
-builder.Services.AddScoped<TagRepository>();
 builder.Services.AddScoped<TagService>();
-
-builder.Services.AddScoped<TagTipoRepository>();
 builder.Services.AddScoped<TagTipoService>();
-
-builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<ProdutoService>();
-
-builder.Services.AddScoped<CarrinhoRepository>();
 builder.Services.AddScoped<CarrinhoService>();
-
-builder.Services.AddScoped<EnderecoRepository>();
 builder.Services.AddScoped<EnderecoService>();
+
 
 var app = builder.Build();
 
@@ -41,7 +33,8 @@ app.UseCors("vite");
 
 app.MapOpenApi();
 
-if (app.Environment.IsDevelopment()) {
+if (app.Environment.IsDevelopment())
+{
     app.MapScalarApiReference();
 }
 
