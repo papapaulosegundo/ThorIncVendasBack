@@ -83,11 +83,11 @@ public class ProdutoService
         return produto;
     }
 
-    public async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset, string? nome = null)
+    public async Task<IEnumerable<Produto>> ObterTodos(int limit, int offset, string? nome = null, int? idCategoria = null)
     {
         if (limit == 0) throw new ArgumentException("A variável 'limit' não pode ser 0");
 
-        var produtos = await _uof.ProdutoRepository.ObterTodosAsync(limit, offset, nome);
+        var produtos = await _uof.ProdutoRepository.ObterTodosAsync(limit, offset, nome, idCategoria);
 
         var produtosComTagsTasks = produtos.Select(async produto =>
         {

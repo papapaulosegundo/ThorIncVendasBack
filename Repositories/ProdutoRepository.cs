@@ -18,8 +18,8 @@ public class ProdutoRepository : IProdutoRepository
     public async Task<int> InserirAsync(Produto dto)
     {
         var sql = @"
-            INSERT INTO produto (nome, descricao, imagem, preco, id_tag_tipo) 
-            VALUES (@Nome, @Descricao, @Imagem, @Preco, @IdTagTipo) 
+            INSERT INTO produto (nome, descricao, imagem, preco, id_tag_tipo, id_categoria) 
+            VALUES (@Nome, @Descricao, @Imagem, @Preco, @IdTagTipo, @IdCategoria) 
             RETURNING id";
         return await Connection.ExecuteScalarAsync<int>(sql, dto, transaction: _transaction);
     }
@@ -29,10 +29,10 @@ public class ProdutoRepository : IProdutoRepository
         var sql = @"
             UPDATE produto
             SET nome = @Nome, descricao = @Descricao, imagem = @Imagem, preco = @Preco, 
-                atualizado_em = NOW(), id_tag_tipo = @IdTagTipo
+                atualizado_em = NOW(), id_tag_tipo = @IdTagTipo, id_categoria = @IdCategoria
             WHERE id = @Id";
         await Connection.ExecuteAsync(sql,
-            new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.IdTagTipo }, transaction: _transaction);
+            new { Id = id, dto.Nome, dto.Descricao, dto.Imagem, dto.Preco, dto.IdTagTipo, dto.IdCategoria }, transaction: _transaction);
     }
 
     public async Task DeletarPorIdAsync(int id)
@@ -45,27 +45,31 @@ public class ProdutoRepository : IProdutoRepository
     {
         var sql = @"
             SELECT id, nome, descricao, imagem, preco, criado_em AS CriadoEm, 
-                   atualizado_em AS AtualizadoEm, id_tag_tipo AS IdTagTipo
+                   atualizado_em AS AtualizadoEm, id_tag_tipo AS IdTagTipo, id_categoria AS IdCategoria
             FROM produto 
             WHERE id = @Id";
         return await Connection.QueryFirstOrDefaultAsync<Produto>(sql, new { Id = id }, transaction: _transaction);
     }
 
-    public async Task<IEnumerable<Produto>> ObterTodosAsync(int limit, int offset, string? nome = null)
+    public async Task<IEnumerable<Produto>> ObterTodosAsync(int limit, int offset, string? nome = null, int? idCategoria = null)
     {
+        var where = new List<string>();
+        if (!string.IsNullOrWhiteSpace(nome)) where.Add("nome ILIKE @Nome");
+        if (idCategoria.HasValue) where.Add("id_categoria = @IdCategoria");
+
         var sql = @"
-            SELECT id, nome, descricao, imagem, preco, criado_em AS CriadoEm, 
-                   atualizado_em AS AtualizadoEm, id_tag_tipo AS IdTagTipo
-            FROM produto";
+          SELECT id, nome, descricao, imagem, preco,
+                 criado_em AS CriadoEm, atualizado_em AS AtualizadoEm,
+                 id_tag_tipo AS IdTagTipo, id_categoria AS IdCategoria
+          FROM produto";
 
-        if (!string.IsNullOrEmpty(nome))
-        {
-            sql += " WHERE nome ILIKE @Nome";
-        }
+        if (where.Count > 0)
+            sql += " WHERE " + string.Join(" AND ", where);
 
-        sql += " LIMIT @Limit OFFSET @Offset";
+        sql += " ORDER BY id DESC LIMIT @Limit OFFSET @Offset";
 
-        return await Connection.QueryAsync<Produto>(sql, new { Limit = limit, Offset = offset, Nome = $"%{nome}%" },
+        return await Connection.QueryAsync<Produto>(sql,
+            new { Limit = limit, Offset = offset, Nome = $"%{nome}%", IdCategoria = idCategoria },
             transaction: _transaction);
     }
 }

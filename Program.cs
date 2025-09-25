@@ -24,6 +24,9 @@ builder.Services.AddScoped<ProdutoService>();
 builder.Services.AddScoped<CarrinhoService>();
 builder.Services.AddScoped<EnderecoService>();
 
+builder.Services.AddScoped<CategoriaRepository>();
+builder.Services.AddScoped<CategoriaService>();
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();

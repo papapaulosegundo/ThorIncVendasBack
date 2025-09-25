@@ -106,11 +106,11 @@ public class ProdutoController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int limit, [FromQuery] int offset, [FromQuery] string? nome = null)
+    public async Task<IActionResult> Get([FromQuery] int limit, [FromQuery] int offset, [FromQuery] string? nome = null, [FromQuery] int? idCategoria = null)
     {
         try
         {
-            var resultado = await _produtoService.ObterTodos(limit, offset, nome);
+            var resultado = await _produtoService.ObterTodos(limit, offset, nome, idCategoria);
             return Ok(resultado);
         }
         catch (ArgumentException ex)

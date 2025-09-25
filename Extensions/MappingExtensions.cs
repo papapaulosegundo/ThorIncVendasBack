@@ -18,7 +18,8 @@ public static class MappingExtensions
             Descricao = dto.Descricao,
             Imagem = dto.Imagem,
             Preco = dto.Preco,
-            IdTagTipo = dto.IdTagTipo
+            IdTagTipo = dto.IdTagTipo,
+            IdCategoria = dto.IdCategoria
         };
     }
 }
